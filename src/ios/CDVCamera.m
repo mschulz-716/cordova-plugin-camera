@@ -433,11 +433,74 @@ static NSString* toBase64(NSData* data) {
     return (scaledImage == nil ? image : scaledImage);
 }
 
+- (NSMutableDictionary*)resultWithMetadata:(NSDictionary*)info
+{
+    NSMutableDictionary* enhancedResult = [[NSMutableDictionary alloc]init];
+    // [enhancedResult addEntriesFromDictionary:info];
+
+    NSString *metaDataString = [NSString stringWithFormat:@"%@",[info objectForKey:@"UIImagePickerControllerMediaMetadata"]];
+    [enhancedResult setObject:metaDataString forKey:@"ImageMetadata"];
+    NSLog(@"Enhanced Camera: Added metadata string to result: %@",metaDataString);
+    
+    NSDictionary *metadata = [info objectForKey:UIImagePickerControllerMediaMetadata];
+    NSDictionary *exifMetadata = [metadata objectForKey:(id)kCGImagePropertyExifDictionary];
+    NSDictionary *tiffMetadata = [metadata objectForKey:(id)kCGImagePropertyTIFFDictionary];
+    NSError* error;
+    NSData* jsonDataExif = [NSJSONSerialization dataWithJSONObject:exifMetadata
+                          options:kNilOptions error:&error];
+    if(error) {
+        NSLog(@"Enhanced Camera: Error creating exif json data: %@",error);
+    } else {
+        NSString* jsonStringExif = [[NSString alloc] initWithData:jsonDataExif
+                          encoding:NSUTF8StringEncoding];
+        [enhancedResult setObject:jsonStringExif forKey:@"ImageMetadataExif"];
+        NSLog(@"Enhanced Camera: Added exif metadata json string to result: %@",jsonStringExif);
+    }
+    error = nil;
+    
+    NSData* jsonDataTiff = [NSJSONSerialization dataWithJSONObject:tiffMetadata
+                          options:kNilOptions error:&error];
+    if(error) {
+        NSLog(@"Enhanced Camera: Error creating tiff json data: %@",error);
+    } else {
+        NSString* jsonStringTiff = [[NSString alloc] initWithData:jsonDataTiff
+                          encoding:NSUTF8StringEncoding];
+        [enhancedResult setObject:jsonStringTiff forKey:@"ImageMetadataTiff"];
+        NSLog(@"Enhanced Camera: Added tiff metadata json string to result: %@",jsonStringTiff);
+    }                      
+    NSString* jsonStringTiff = [[NSString alloc] initWithData:jsonDataTiff
+                          encoding:NSUTF8StringEncoding];
+    [enhancedResult setObject:jsonStringTiff forKey:@"ImageMetadataTiff"];
+    return enhancedResult;
+}
+
+- (CDVPluginResult*)createJsonResult:(NSMutableDictionary*) enhancedResult
+{
+    CDVPluginResult* result = nil;
+    
+    NSError* error;
+    NSData* jsonData = [NSJSONSerialization dataWithJSONObject:enhancedResult
+        options:kNilOptions error:&error];
+    if(error) {
+        NSLog(@"Enhanced Camera: Error creating result json data: %@",error);
+        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_IO_EXCEPTION messageAsString:[error localizedDescription]];
+    } else {
+        NSString* jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+        /* NSLog(@"Enhanced Camera: JSON result is %@", jsonString); */
+        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:jsonString];
+    }
+    return result;
+}
+
 - (void)resultForImage:(CDVPictureOptions*)options info:(NSDictionary*)info completion:(void (^)(CDVPluginResult* res))completion
 {
     CDVPluginResult* result = nil;
     BOOL saveToPhotoAlbum = options.saveToPhotoAlbum;
     UIImage* image = nil;
+    __weak CDVCamera* weakSelf = self;
+
+    NSLog(@"Camera: Photo metadata are %@", info);
+    NSMutableDictionary* enhancedResult = [weakSelf resultWithMetadata:info];
 
     switch (options.destinationType) {
         case DestinationTypeNativeUri:
@@ -455,14 +518,18 @@ static NSString* toBase64(NSData* data) {
                         resultToReturn = [CDVPluginResult resultWithStatus:CDVCommandStatus_IO_EXCEPTION messageAsString:[error localizedDescription]];
                     } else {
                         NSString* nativeUri = [[self urlTransformer:assetURL] absoluteString];
-                        resultToReturn = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:nativeUri];
+                        [enhancedResult setObject:nativeUri forKey:@"ImageResult"];
+                        NSLog(@"Enhanced Camera: Result is %@", enhancedResult);
+                        resultToReturn = [weakSelf createJsonResult:enhancedResult];
                     }
                     completion(resultToReturn);
                 }];
                 return;
             } else {
                 NSString* nativeUri = [[self urlTransformer:url] absoluteString];
-                result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:nativeUri];
+                [enhancedResult setObject:nativeUri forKey:@"ImageResult"];
+                NSLog(@"Enhanced Camera: Result is %@", enhancedResult);
+                result = [weakSelf createJsonResult:enhancedResult];
             }
         }
             break;
@@ -480,7 +547,9 @@ static NSString* toBase64(NSData* data) {
                 if (![data writeToFile:filePath options:NSAtomicWrite error:&err]) {
                     result = [CDVPluginResult resultWithStatus:CDVCommandStatus_IO_EXCEPTION messageAsString:[err localizedDescription]];
                 } else {
-                    result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:[[self urlTransformer:[NSURL fileURLWithPath:filePath]] absoluteString]];
+                    [enhancedResult setObject:[[self urlTransformer:[NSURL fileURLWithPath:filePath]] absoluteString] forKey:@"ImageResult"];
+                    NSLog(@"Enhanced Camera: Result is %@", enhancedResult);
+                    result = [weakSelf createJsonResult:enhancedResult];
                 }
             }
         }
@@ -490,7 +559,8 @@ static NSString* toBase64(NSData* data) {
             image = [self retrieveImage:info options:options];
             NSData* data = [self processImage:image info:info options:options];
             if (data)  {
-                result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:toBase64(data)];
+                [enhancedResult setObject:toBase64(data) forKey:@"ImageResult"];
+                result = [weakSelf createJsonResult:enhancedResult];
             }
         }
             break;
