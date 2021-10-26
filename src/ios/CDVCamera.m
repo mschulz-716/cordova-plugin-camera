@@ -446,31 +446,31 @@ static NSString* toBase64(NSData* data) {
     NSDictionary *exifMetadata = [metadata objectForKey:(id)kCGImagePropertyExifDictionary];
     NSDictionary *tiffMetadata = [metadata objectForKey:(id)kCGImagePropertyTIFFDictionary];
     NSError* error;
-    NSData* jsonDataExif = [NSJSONSerialization dataWithJSONObject:exifMetadata
-                          options:kNilOptions error:&error];
-    if(error) {
-        NSLog(@"Enhanced Camera: Error creating exif json data: %@",error);
-    } else {
-        NSString* jsonStringExif = [[NSString alloc] initWithData:jsonDataExif
-                          encoding:NSUTF8StringEncoding];
-        [enhancedResult setObject:jsonStringExif forKey:@"ImageMetadataExif"];
-        NSLog(@"Enhanced Camera: Added exif metadata json string to result: %@",jsonStringExif);
+    if(exifMetadata) {
+        NSData* jsonDataExif = [NSJSONSerialization dataWithJSONObject:exifMetadata
+                              options:kNilOptions error:&error];
+        if(error) {
+            NSLog(@"Enhanced Camera: Error creating exif json data: %@",error);
+        } else {
+            NSString* jsonStringExif = [[NSString alloc] initWithData:jsonDataExif
+                              encoding:NSUTF8StringEncoding];
+            [enhancedResult setObject:jsonStringExif forKey:@"ImageMetadataExif"];
+            NSLog(@"Enhanced Camera: Added exif metadata json string to result: %@",jsonStringExif);
+        }
     }
     error = nil;
-    
-    NSData* jsonDataTiff = [NSJSONSerialization dataWithJSONObject:tiffMetadata
-                          options:kNilOptions error:&error];
-    if(error) {
-        NSLog(@"Enhanced Camera: Error creating tiff json data: %@",error);
-    } else {
-        NSString* jsonStringTiff = [[NSString alloc] initWithData:jsonDataTiff
-                          encoding:NSUTF8StringEncoding];
-        [enhancedResult setObject:jsonStringTiff forKey:@"ImageMetadataTiff"];
-        NSLog(@"Enhanced Camera: Added tiff metadata json string to result: %@",jsonStringTiff);
-    }                      
-    NSString* jsonStringTiff = [[NSString alloc] initWithData:jsonDataTiff
-                          encoding:NSUTF8StringEncoding];
-    [enhancedResult setObject:jsonStringTiff forKey:@"ImageMetadataTiff"];
+    if(tiffMetadata) {
+        NSData* jsonDataTiff = [NSJSONSerialization dataWithJSONObject:tiffMetadata
+                              options:kNilOptions error:&error];
+        if(error) {
+            NSLog(@"Enhanced Camera: Error creating tiff json data: %@",error);
+        } else {
+            NSString* jsonStringTiff = [[NSString alloc] initWithData:jsonDataTiff
+                              encoding:NSUTF8StringEncoding];
+            [enhancedResult setObject:jsonStringTiff forKey:@"ImageMetadataTiff"];
+            NSLog(@"Enhanced Camera: Added tiff metadata json string to result: %@",jsonStringTiff);
+        }
+    }
     return enhancedResult;
 }
 
