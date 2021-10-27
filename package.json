@@ -1,6 +1,6 @@
 {
   "name": "de-gaf-plugins-camera",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Cordova Camera Plugin",
   "types": "./types/index.d.ts",
   "cordova": {
