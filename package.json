@@ -1,10 +1,10 @@
 {
-  "name": "cordova-plugin-camera",
-  "version": "4.2.0-dev",
+  "name": "de-gaf-plugins-camera",
+  "version": "0.0.1",
   "description": "Cordova Camera Plugin",
   "types": "./types/index.d.ts",
   "cordova": {
-    "id": "cordova-plugin-camera",
+    "id": "de-gaf-plugins-photodirection",
     "platforms": [
       "android",
       "ios",
@@ -13,12 +13,13 @@
       "osx"
     ]
   },
+  "publishConfig" : { "registry" : "https://artifact.gaf.de/artifactory/api/npm/npm-local/" },
   "repository": {
     "type": "git",
-    "url": "https://github.com/apache/cordova-plugin-camera"
+    "url": "https://github.com/mschulz-716/cordova-plugin-camera/tree/gmm"
   },
   "bugs": {
-    "url": "https://github.com/apache/cordova-plugin-camera/issues"
+    "url": "https://github.com/mschulz-716/cordova-plugin-camera/issues"
   },
   "keywords": [
     "cordova",
@@ -34,7 +35,7 @@
     "test": "npm run eslint",
     "eslint": "node node_modules/eslint/bin/eslint www && node node_modules/eslint/bin/eslint src && node node_modules/eslint/bin/eslint tests"
   },
-  "author": "Apache Software Foundation",
+  "author": "Apache Software Foundation, GAF AG",
   "license": "Apache-2.0",
   "engines": {
     "cordovaDependencies": {
