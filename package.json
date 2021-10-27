@@ -4,7 +4,7 @@
   "description": "Cordova Camera Plugin",
   "types": "./types/index.d.ts",
   "cordova": {
-    "id": "de-gaf-plugins-photodirection",
+    "id": "de-gaf-plugins-camera",
     "platforms": [
       "android",
       "ios",
