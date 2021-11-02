@@ -2,6 +2,146 @@
 title: Camera
 description: Take pictures with the device camera.
 ---
+
+# GAF Modfifications
+The original repo is: https://github.com/apache/cordova-plugin-camera
+
+The iOS part was modified so that the result now also contains metadata of the photo since the exif data in the photo itself are quite limited.
+To keep the plugin as much as possible the same as the original one (so that we can integrate changes from the original repo as easy as possible) no changes were made to the Android part. The drawback with this is, that the result from iOS and Android now differ and need to be treated differently.
+
+## Result from iOS
+
+Metadata available (received by the native API) look as follows (the plugin result is described further below):
+```
+{
+    DPIHeight = 72;
+    DPIWidth = 72;
+    Orientation = 1;
+    "{Exif}" =     {
+        ApertureValue = "2.526068811667587";
+        BrightnessValue = "1.539216849512918";
+        ColorSpace = 1;
+        DateTimeDigitized = "2021:11:02 10:32:18";
+        DateTimeOriginal = "2021:11:02 10:32:18";
+        DigitalZoomRatio = "1.511111111111111";
+        ExifVersion = 0232;
+        ExposureBiasValue = 0;
+        ExposureMode = 0;
+        ExposureProgram = 2;
+        ExposureTime = "0.05";
+        FNumber = "2.4";
+        Flash = 32;
+        FocalLenIn35mmFilm = 48;
+        FocalLength = "3.3";
+        ISOSpeedRatings =         (
+            200
+        );
+        LensMake = Apple;
+        LensModel = "iPad (7th generation) back camera 3.3mm f/2.4";
+        LensSpecification =         (
+            "3.3",
+            "3.3",
+            "2.4",
+            "2.4"
+        );
+        MeteringMode = 5;
+        OffsetTime = "+01:00";
+        OffsetTimeDigitized = "+01:00";
+        OffsetTimeOriginal = "+01:00";
+        PixelXDimension = 3264;
+        PixelYDimension = 2448;
+        SceneType = 1;
+        SensingMethod = 2;
+        ShutterSpeedValue = "4.322274383253442";
+        SubjectArea =         (
+            1631,
+            1223,
+            1795,
+            1077
+        );
+        SubsecTimeDigitized = 155;
+        SubsecTimeOriginal = 155;
+        WhiteBalance = 0;
+    };
+    "{MakerApple}" =     {
+        1 = 12;
+        14 = 0;
+        2 = {length = 512, bytes = 0xaa023901 c3007d00 6c009100 9400a300 ... c200c600 1401ff00 };
+        20 = 4;
+        23 = 0;
+        25 = 0;
+        3 =         {
+            epoch = 0;
+            flags = 1;
+            timescale = 1000000000;
+            value = 37682208006000;
+        };
+        31 = 0;
+        32 = "D5A226DD-40E6-4046-A294-4EFA16FC2AA1";
+        37 = 0;
+        38 = 0;
+        39 = 0;
+        4 = 1;
+        43 = "6A6F8181-1BFB-4116-8628-36DCD152391F";
+        47 = 184;
+        5 = 216;
+        54 = 191;
+        59 = 0;
+        6 = 215;
+        60 = 0;
+        7 = 1;
+        8 =         (
+            "-0.7700949311256409",
+            "0.03644481673836708",
+            "-0.6525328159332275"
+        );
+    };
+    "{TIFF}" =     {
+        DateTime = "2021:11:02 10:32:18";
+        HostComputer = "iPad (7th generation)";
+        Make = Apple;
+        Model = "iPad (7th generation)";
+        ResolutionUnit = 2;
+        Software = "14.4";
+        XResolution = 72;
+        YResolution = 72;
+    };
+}
+```
+
+
+The plugin gives back a JSON string with 4 main keys:
+
+"ImageMetadata"
+
+"ImageMetadataExif"
+
+"ImageMetadataTiff"
+
+"ImageResult"
+
+
+### Description
+#### ImageMetadata
+The value is the string with all metadata information as in the example above.
+#### ImageMetadataExif
+The value contains the exif part of the metadata (see "{Exif}" in the example above) as a JSON string.
+#### ImageMetadataTiff
+The value contains the tiff part of the metadata (see "{TIFF}" in the example above) as a JSON string.
+#### ImageResult
+The value contains the file URI or the base64 encoded image depending on the request. This is the original result of the plugin, see description below.
+
+
+The plugin result can therefore be processed as follows:
+```
+const photoData = JSON.parse(<any>imageResult);
+if (!(photoData && photoData.ImageResult)) {
+    throw new Error('There is no valid result from the Camera plugin');
+}
+const file = photoData.ImageResult;
+const photoExifMetadata = JSON.parse(photoData.ImageMetadataExif);
+```
+---
 <!---
 # license: Licensed to the Apache Software Foundation (ASF) under one
 #         or more contributor license agreements.  See the NOTICE file
